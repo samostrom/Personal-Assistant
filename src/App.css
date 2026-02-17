@@ -1,0 +1,62 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  background-color: #282c34;
+}
+
+.App-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: calc(10px + 2vmin);
+  color: white;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.status-indicator {
+  margin: 20px 0;
+  font-size: 18px;
+}
+
+.online {
+  color: #4caf50;
+}
+
+.offline {
+  color: #f44336;
+}
+
+.install-button {
+  background-color: #61dafb;
+  border: none;
+  color: #282c34;
+  padding: 15px 32px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 20px 0;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.install-button:hover {
+  background-color: #4fa8c5;
+}
+
+.content {
+  max-width: 600px;
+  margin-top: 30px;
+  line-height: 1.6;
+}
+
+.content p {
+  font-size: 18px;
+  margin: 10px 0;
+}
