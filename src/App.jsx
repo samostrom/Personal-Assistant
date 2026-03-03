@@ -12,6 +12,7 @@ function App() {
   const [transcripts, setTranscripts] = useState([]);
   const [recordingTime, setRecordingTime] = useState(0);
   const [currentAudioId, setCurrentAudioId] = useState(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -131,24 +132,44 @@ function App() {
     }
   };
 
-  const handleSendToWhisper = () => {
-    // This will be implemented later when connecting to OpenAI Whisper API
-    console.log('Sending to Whisper API...');
+  const handleSendToWhisper = async () => {
+    setIsTranscribing(true);
 
-    // For now, add a placeholder transcript
-    const newTranscript = {
-      id: Date.now(),
-      audioId: currentAudioId, // Link to audio file
-      timestamp: new Date().toLocaleString(),
-      text: 'Transcript will appear here once connected to OpenAI Whisper API...',
-      duration: recordingTime
-    };
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
 
-    setTranscripts(prev => [newTranscript, ...prev]);
-    setShowConfirmation(false);
-    setAudioBlob(null);
-    setCurrentAudioId(null);
-    setRecordingTime(0);
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.details || 'Transcription failed');
+      }
+
+      const { transcript } = await response.json();
+
+      const newTranscript = {
+        id: Date.now(),
+        audioId: currentAudioId,
+        timestamp: new Date().toLocaleString(),
+        text: transcript,
+        duration: recordingTime,
+      };
+
+      setTranscripts(prev => [newTranscript, ...prev]);
+      setShowConfirmation(false);
+      setAudioBlob(null);
+      setCurrentAudioId(null);
+      setRecordingTime(0);
+    } catch (error) {
+      console.error('Transcription error:', error);
+      alert(`Transcription failed: ${error.message}`);
+    } finally {
+      setIsTranscribing(false);
+    }
   };
 
   const handleCancelSend = () => {
@@ -253,14 +274,16 @@ function App() {
                 <button
                   className="cancel-button"
                   onClick={handleCancelSend}
+                  disabled={isTranscribing}
                 >
                   Cancel
                 </button>
                 <button
                   className="send-button"
                   onClick={handleSendToWhisper}
+                  disabled={isTranscribing}
                 >
-                  Send to Whisper
+                  {isTranscribing ? 'Transcribing...' : 'Send to Whisper'}
                 </button>
               </div>
             </div>
