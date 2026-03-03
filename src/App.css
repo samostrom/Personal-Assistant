@@ -617,9 +617,26 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.transcript-item.expanded .transcript-header {
   margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+}
+
+.transcript-chevron {
+  color: rgba(0, 245, 255, 0.6);
+  font-size: 1.2rem;
+  transition: transform 0.25s ease;
+  display: inline-block;
+  transform: rotate(0deg);
+}
+
+.transcript-item.expanded .transcript-chevron {
+  transform: rotate(90deg);
 }
 
 .transcript-timestamp {
@@ -657,6 +674,49 @@ h1 {
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.6;
   font-size: 1rem;
+}
+
+.delete-transcript-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 0, 85, 0.5);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.delete-transcript-btn:hover {
+  color: #ff0055;
+  background: rgba(255, 0, 85, 0.1);
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+}
+
+.transcript-result {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 255, 136, 0.07);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 10px;
+  text-align: left;
+}
+
+.transcript-result-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #00ff88;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  margin: 0 0 8px 0;
+}
+
+.transcript-result-text {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  font-size: 1rem;
+  margin: 0;
 }
 
 /* Responsive Design */

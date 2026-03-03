@@ -13,6 +13,8 @@ function App() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [currentAudioId, setCurrentAudioId] = useState(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptResult, setTranscriptResult] = useState(null);
+  const [expandedIds, setExpandedIds] = useState(new Set());
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -160,10 +162,23 @@ function App() {
       };
 
       setTranscripts(prev => [newTranscript, ...prev]);
-      setShowConfirmation(false);
-      setAudioBlob(null);
-      setCurrentAudioId(null);
-      setRecordingTime(0);
+      setTranscriptResult(transcript);
+
+      // Create Todoist task — routes to #ProjectName if tagged, otherwise Inbox
+      try {
+        const taskResponse = await fetch('/api/create-task', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript }),
+        });
+        if (!taskResponse.ok) {
+          const err = await taskResponse.json();
+          console.error('Todoist error:', err.details);
+          alert(`Task creation failed: ${err.details}`);
+        }
+      } catch (taskError) {
+        console.error('Todoist error:', taskError);
+      }
     } catch (error) {
       console.error('Transcription error:', error);
       alert(`Transcription failed: ${error.message}`);
@@ -177,6 +192,29 @@ function App() {
     setAudioBlob(null);
     setCurrentAudioId(null);
     setRecordingTime(0);
+    setTranscriptResult(null);
+  };
+
+  const handleDone = () => {
+    setShowConfirmation(false);
+    setAudioBlob(null);
+    setCurrentAudioId(null);
+    setRecordingTime(0);
+    setTranscriptResult(null);
+  };
+
+  const deleteTranscript = (id) => {
+    const updated = transcripts.filter(t => t.id !== id);
+    setTranscripts(updated);
+    localStorage.setItem('transcripts', JSON.stringify(updated));
+  };
+
+  const toggleTranscript = (id) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
   const formatTime = (seconds) => {
@@ -270,21 +308,36 @@ function App() {
                 </p>
               </div>
 
+              {transcriptResult && (
+                <div className="transcript-result">
+                  <p className="transcript-result-label">Transcription</p>
+                  <p className="transcript-result-text">{transcriptResult}</p>
+                </div>
+              )}
+
               <div className="modal-buttons">
-                <button
-                  className="cancel-button"
-                  onClick={handleCancelSend}
-                  disabled={isTranscribing}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="send-button"
-                  onClick={handleSendToWhisper}
-                  disabled={isTranscribing}
-                >
-                  {isTranscribing ? 'Transcribing...' : 'Send to Whisper'}
-                </button>
+                {transcriptResult ? (
+                  <button className="send-button" onClick={handleDone}>
+                    Done
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      className="cancel-button"
+                      onClick={handleCancelSend}
+                      disabled={isTranscribing}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="send-button"
+                      onClick={handleSendToWhisper}
+                      disabled={isTranscribing}
+                    >
+                      {isTranscribing ? 'Transcribing...' : 'Send to Whisper'}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -298,8 +351,8 @@ function App() {
               <p className="empty-state">No transcripts yet. Start recording to create your first transcript!</p>
             ) : (
               transcripts.map(transcript => (
-                <div key={transcript.id} className="transcript-item">
-                  <div className="transcript-header">
+                <div key={transcript.id} className={`transcript-item ${expandedIds.has(transcript.id) ? 'expanded' : ''}`}>
+                  <div className="transcript-header" onClick={() => toggleTranscript(transcript.id)}>
                     <span className="transcript-timestamp">{transcript.timestamp}</span>
                     <div className="transcript-actions">
                       <span className="transcript-duration">{formatTime(transcript.duration)}</span>
@@ -308,13 +361,24 @@ function App() {
                           to="/audio-files"
                           className="audio-link"
                           title="View audio file"
+                          onClick={e => e.stopPropagation()}
                         >
                           🎵
                         </Link>
                       )}
+                      <button
+                        className="delete-transcript-btn"
+                        onClick={e => { e.stopPropagation(); deleteTranscript(transcript.id); }}
+                        title="Delete transcript"
+                      >
+                        ✕
+                      </button>
+                      <span className="transcript-chevron">›</span>
                     </div>
                   </div>
-                  <div className="transcript-text">{transcript.text}</div>
+                  {expandedIds.has(transcript.id) && (
+                    <div className="transcript-text">{transcript.text}</div>
+                  )}
                 </div>
               ))
             )}
